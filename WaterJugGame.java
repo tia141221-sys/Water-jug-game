@@ -8,66 +8,81 @@ public class WaterJugGame extends JFrame {
     private int jugA = 0;
     private int jugB = 0;
     private int moves = 0;
-    private JProgressBar barA;
-    private JProgressBar barB;
-    private JLabel waterLabel;
+    private int target = 2;
+    private boolean gameWon = false;
+    private JProgressBar jugAProgress;
+    private JProgressBar jugBProgress;
+
+    private JLabel waterLevelLabel;
     private JLabel moveLabel;
+    private JLabel targetLabel;
     private JLabel statusLabel;
+
+    private JComboBox<String> levelBox;
+
+    private JButton fillA;
+    private JButton fillB;
+    private JButton emptyA;
+    private JButton emptyB;
+    private JButton transferAB;
+    private JButton transferBA;
+    private JButton resetButton;
+
     public WaterJugGame() {
 
         setTitle("Water Jug Game");
-        setSize(600, 500);
+        setSize(500, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
+        JPanel levelPanel = new JPanel();
 
-        JLabel title = new JLabel(
-                "WATER JUG GAME",
-                JLabel.CENTER
+        levelPanel.add(new JLabel("Select Level:"));
+
+        levelBox = new JComboBox<>(
+                new String[]{"Level 1 - Target 2L",
+                             "Level 2 - Target 1L",
+                             "Level 3 - Target 3L"}
         );
 
-        title.setFont(
-                new Font("Arial", Font.BOLD, 26)
+        levelPanel.add(levelBox);
+
+        add(levelPanel, BorderLayout.NORTH);
+        JPanel gamePanel = new JPanel(new GridLayout(6, 1, 5, 5));
+
+        gamePanel.add(new JLabel("Jug A (Capacity: 4L)"));
+
+        jugAProgress = new JProgressBar(0, capacityA);
+        jugAProgress.setStringPainted(true);
+        gamePanel.add(jugAProgress);
+        gamePanel.add(new JLabel("Jug B (Capacity: 3L)"));
+        jugBProgress = new JProgressBar(0, capacityB);
+        jugBProgress.setStringPainted(true);
+        gamePanel.add(jugBProgress);
+        waterLevelLabel = new JLabel(
+                "Water Level: A = 0L, B = 0L"
         );
 
-        add(title, BorderLayout.NORTH);
+        gamePanel.add(waterLevelLabel);
 
-        JPanel jugPanel = new JPanel(
-                new GridLayout(1, 2, 40, 10)
+        targetLabel = new JLabel(
+                "Target: 2L"
         );
 
-        barA = new JProgressBar(0, capacityA);
-        barA.setOrientation(JProgressBar.VERTICAL);
-        barA.setStringPainted(true);
-        barA.setBorder(
-                BorderFactory.createTitledBorder("Jug A (4L)")
-        );
+        gamePanel.add(targetLabel);
+        add(gamePanel, BorderLayout.CENTER);
 
-        barB = new JProgressBar(0, capacityB);
-        barB.setOrientation(JProgressBar.VERTICAL);
-        barB.setStringPainted(true);
-        barB.setBorder(
-                BorderFactory.createTitledBorder("Jug B (3L)")
-        );
+        JPanel buttonPanel = new JPanel(new GridLayout(4, 2, 5, 5));
 
-        jugPanel.add(barA);
-        jugPanel.add(barB);
+        fillA = new JButton("Fill A");
+        fillB = new JButton("Fill B");
 
-        add(jugPanel, BorderLayout.CENTER);
+        emptyA = new JButton("Empty A");
+        emptyB = new JButton("Empty B");
 
-        JPanel buttonPanel = new JPanel(
-                new GridLayout(4, 2, 10, 10)
-        );
+        transferAB = new JButton("A → B");
+        transferBA = new JButton("B → A");
 
-        JButton fillA = new JButton("Fill A");
-        JButton fillB = new JButton("Fill B");
-
-        JButton emptyA = new JButton("Empty A");
-        JButton emptyB = new JButton("Empty B");
-
-        JButton transferAB = new JButton("A → B");
-        JButton transferBA = new JButton("B → A");
-
-        JButton reset = new JButton("Reset");
+        resetButton = new JButton("Reset");
 
         buttonPanel.add(fillA);
         buttonPanel.add(fillB);
@@ -78,159 +93,318 @@ public class WaterJugGame extends JFrame {
         buttonPanel.add(transferAB);
         buttonPanel.add(transferBA);
 
-        buttonPanel.add(reset);
+        buttonPanel.add(resetButton);
+
 
         add(buttonPanel, BorderLayout.SOUTH);
 
-        JPanel statusPanel = new JPanel(
-                new GridLayout(3, 1)
-        );
+        JPanel statusPanel = new JPanel(new GridLayout(3, 1));
 
-        waterLabel = new JLabel(
-                "A: 0L B: 0L",
-                JLabel.CENTER
-        );
-
-        moveLabel = new JLabel(
-                "Moves: 0",
-                JLabel.CENTER
-        );
+        moveLabel = new JLabel("Moves: 0");
 
         statusLabel = new JLabel(
-                "Game Started",
-                JLabel.CENTER
+                "Status: Game Started"
         );
 
-        statusPanel.add(waterLabel);
         statusPanel.add(moveLabel);
         statusPanel.add(statusLabel);
 
-        add(statusPanel, BorderLayout.EAST);
-        fillA.addActionListener(e -> {
+        add(statusPanel, BorderLayout.WEST);
 
-            jugA = capacityA;
-            moves++;
+        fillA.addActionListener(e -> fillJugA());
 
-            statusLabel.setText("Jug A Filled");
+        fillB.addActionListener(e -> fillJugB());
 
-            updateDisplay();
-        });
+        emptyA.addActionListener(e -> emptyJugA());
 
+        emptyB.addActionListener(e -> emptyJugB());
 
-        fillB.addActionListener(e -> {
+        transferAB.addActionListener(e -> transferAtoB());
 
-            jugB = capacityB;
-            moves++;
+        transferBA.addActionListener(e -> transferBtoA());
 
-            statusLabel.setText("Jug B Filled");
+        resetButton.addActionListener(e -> resetGame());
 
-            updateDisplay();
-        });
- 
-        emptyA.addActionListener(e -> {
+        levelBox.addActionListener(e -> changeLevel());
 
-            jugA = 0;
-            moves++;
+        updateState();
 
-            statusLabel.setText("Jug A Emptied");
-
-            updateDisplay();
-        });
-
-
-        emptyB.addActionListener(e -> {
-
-            jugB = 0;
-            moves++;
-
-            statusLabel.setText("Jug B Emptied");
-
-            updateDisplay();
-        });
-
-        transferAB.addActionListener(e -> {
-
-            int transfer = Math.min(
-                    jugA,
-                    capacityB - jugB
-            );
-
-            jugA = jugA - transfer;
-            jugB = jugB + transfer;
-
-            moves++;
-
-            statusLabel.setText(
-                    "Water transferred A → B"
-            );
-
-            updateDisplay();
-        });
-
-        transferBA.addActionListener(e -> {
-
-            int transfer = Math.min(
-                    jugB,
-                    capacityA - jugA
-            );
-
-            jugB = jugB - transfer;
-            jugA = jugA + transfer;
-
-            moves++;
-
-            statusLabel.setText(
-                    "Water transferred B → A"
-            );
-
-            updateDisplay();
-        });
-        reset.addActionListener(e -> {
-
-            jugA = 0;
-            jugB = 0;
-            moves = 0;
-
-            statusLabel.setText("Game Reset");
-
-            updateDisplay();
-        });
-
-
-        updateDisplay();
-
-        setLocationRelativeTo(null);
         setVisible(true);
     }
-    private void updateDisplay() {
 
-        // Update Jug A
-        barA.setValue(jugA);
-        barA.setString(jugA + "L");
+    private void changeLevel() {
 
+        int selectedLevel = levelBox.getSelectedIndex();
 
-        // Update Jug B
-        barB.setValue(jugB);
-        barB.setString(jugB + "L");
+        if (selectedLevel == 0) {
+            target = 2;
+        }
+        else if (selectedLevel == 1) {
+            target = 1;
+        }
+        else {
+            target = 3;
+        }
 
+        resetGame();
+    }
 
-        // Update water level
-        waterLabel.setText(
-                "A: " + jugA + "L B: " + jugB + "L"
+    private void fillJugA() {
+
+        if (gameWon) {
+            return;
+        }
+
+        if (jugA == capacityA) {
+            statusLabel.setText(
+                    "Status: Jug A is already full!"
+            );
+            return;
+        }
+
+        jugA = capacityA;
+        moves++;
+
+        statusLabel.setText(
+                "Status: Jug A Filled"
         );
 
+        updateState();
+        checkWin();
+    }
 
-        // Update moves
+    private void fillJugB() {
+
+        if (gameWon) {
+            return;
+        }
+
+        if (jugB == capacityB) {
+            statusLabel.setText(
+                    "Status: Jug B is already full!"
+            );
+            return;
+        }
+
+        jugB = capacityB;
+        moves++;
+
+        statusLabel.setText(
+                "Status: Jug B Filled"
+        );
+
+        updateState();
+        checkWin();
+    }
+
+    private void emptyJugA() {
+
+        if (gameWon) {
+            return;
+        }
+
+        if (jugA == 0) {
+            statusLabel.setText(
+                    "Status: Jug A is already empty!"
+            );
+            return;
+        }
+
+        jugA = 0;
+        moves++;
+
+        statusLabel.setText(
+                "Status: Jug A Emptied"
+        );
+
+        updateState();
+        checkWin();
+    }
+
+    private void emptyJugB() {
+
+        if (gameWon) {
+            return;
+        }
+
+        if (jugB == 0) {
+            statusLabel.setText(
+                    "Status: Jug B is already empty!"
+            );
+            return;
+        }
+
+        jugB = 0;
+        moves++;
+
+        statusLabel.setText(
+                "Status: Jug B Emptied"
+        );
+
+        updateState();
+        checkWin();
+    }
+
+    private void transferAtoB() {
+
+        if (gameWon) {
+            return;
+        }
+
+        if (jugA == 0) {
+            statusLabel.setText(
+                    "Status: Jug A is empty!"
+            );
+            return;
+        }
+
+        if (jugB == capacityB) {
+            statusLabel.setText(
+                    "Status: Jug B is full!"
+            );
+            return;
+        }
+
+        int transfer = Math.min(
+                jugA,
+                capacityB - jugB
+        );
+
+        jugA -= transfer;
+        jugB += transfer;
+
+        moves++;
+
+        statusLabel.setText(
+                "Status: Water transferred A → B"
+        );
+
+        updateState();
+        checkWin();
+    }
+
+    private void transferBtoA() {
+
+        if (gameWon) {
+            return;
+        }
+
+        if (jugB == 0) {
+            statusLabel.setText(
+                    "Status: Jug B is empty!"
+            );
+            return;
+        }
+
+        if (jugA == capacityA) {
+            statusLabel.setText(
+                    "Status: Jug A is full!"
+            );
+            return;
+        }
+
+        int transfer = Math.min(
+                jugB,
+                capacityA - jugA
+        );
+
+        jugB -= transfer;
+        jugA += transfer;
+
+        moves++;
+
+        statusLabel.setText(
+                "Status: Water transferred B → A"
+        );
+
+        updateState();
+        checkWin();
+    }
+
+    private void updateState() {
+
+        jugAProgress.setValue(jugA);
+        jugBProgress.setValue(jugB);
+
+        jugAProgress.setString(jugA + " L");
+        jugBProgress.setString(jugB + " L");
+
+        waterLevelLabel.setText(
+                "Water Level: A = " + jugA +
+                "L, B = " + jugB + "L"
+        );
+
         moveLabel.setText(
                 "Moves: " + moves
         );
+
+        targetLabel.setText(
+                "Target: " + target + "L"
+        );
+    }
+
+    private void checkWin() {
+
+        if (jugA == target || jugB == target) {
+
+            gameWon = true;
+
+            statusLabel.setText(
+                    "Status: YOU WIN!"
+            );
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Congratulations!\n"
+                    + "You completed the game!\n"
+                    + "Target: " + target + "L\n"
+                    + "Total Moves: " + moves,
+                    "Game Completed",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+
+            disableGameButtons();
+        }
+    }
+
+    private void disableGameButtons() {
+
+        fillA.setEnabled(false);
+        fillB.setEnabled(false);
+
+        emptyA.setEnabled(false);
+        emptyB.setEnabled(false);
+
+        transferAB.setEnabled(false);
+        transferBA.setEnabled(false);
     }
 
 
+    private void resetGame() {
+
+        jugA = 0;
+        jugB = 0;
+        moves = 0;
+
+        gameWon = false;
+
+        fillA.setEnabled(true);
+        fillB.setEnabled(true);
+
+        emptyA.setEnabled(true);
+        emptyB.setEnabled(true);
+
+        transferAB.setEnabled(true);
+        transferBA.setEnabled(true);
+
+        statusLabel.setText(
+                "Status: Game Reset"
+        );
+
+        updateState();
+    }
     public static void main(String[] args) {
 
-        SwingUtilities.invokeLater(() -> {
-            new WaterJugGame();
-        });
+        new WaterJugGame();
     }
 }
